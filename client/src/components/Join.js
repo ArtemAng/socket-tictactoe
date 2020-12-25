@@ -2,6 +2,7 @@ import { Button, Input, Paper, Typography } from '@material-ui/core';
 import { useEffect, useState, useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { SocketContext } from '../App';
+import { Link } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -51,6 +52,8 @@ const Join = () => {
     const socket = useContext(SocketContext);
 
     useEffect(() => {
+
+        socket.emit('get-rooms', rooms.length);
         // socket = ;
         socket.on('rooms', (data) => {
             console.log(data);
@@ -60,17 +63,26 @@ const Join = () => {
     const classes = useStyles();
     return (
         <Paper className={classes.paper}>
-            <Typography variant='h4' className={classes.header} color='secondary' >Join into room</Typography>
+            <Typography
+                variant='h4'
+                className={classes.header}
+                color='secondary'
+            >
+                Join into room
+            </Typography>
             <Input onChange={(e) => setUserName(e.target.value)} className={classes.textField} placeholder="Name" color='secondary' />
             {
                 rooms.map((room, i) => (
                     <div className={classes.room}>
-                        <Button
-                            key={i}
-                            onClick={() => socket.emit('join-room', [userName, room.id])}
-                            className={classes.header}
-                            variant='outlined'
-                            color='secondary'> {room.id} </Button>
+                        <Link to={`/game?username=${userName}&id=${room.id}&type=join`}>
+                            <Button
+                                key={i}
+                                className={classes.header}
+                                variant='outlined'
+                                color='secondary'> 
+                                #{room.id} 
+                            </Button>
+                        </Link>
                         <div className={room.status === 'waiting' ? classes.waiting : classes.started}></div>
                     </div>
                 ))

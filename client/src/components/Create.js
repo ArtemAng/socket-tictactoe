@@ -34,9 +34,9 @@ const Create = () => {
     const socket = useContext(SocketContext);
 
     // useEffect(() => {
-    //     socket.
+        
 
-    // }, [input]);
+    // }, []);
 
     useEffect(() => {
         console.log(socket)

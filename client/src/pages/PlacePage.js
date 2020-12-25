@@ -77,6 +77,7 @@ const PlacePage = () => {
     }, [socket, setRoom]);
 
     const cellChange = (idRow, idCol) => {
+        // console.log();
         socket.on('changed', (data) => setRoom(data))
         const newState = { ...room };
         newState.board.place[idRow][idCol] = room.board.next;
@@ -134,6 +135,7 @@ const PlacePage = () => {
         });
         if (isWin) {
             alert('win ' + move);
+            socket.emit('disconnected');
         }
         return isWin
     }

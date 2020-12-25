@@ -4,7 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { createContext } from 'react';
 
 const socket = io.connect('localhost:1337');
-export const SocketContext = createContext({ socket })
+export const SocketContext = createContext({ socket });
 
 function App() {
   // setSocket(socket)

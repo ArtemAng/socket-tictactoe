@@ -1,13 +1,11 @@
 import { Grid } from '@material-ui/core';
-import {useContext} from 'react';
 import Create from '../components/Create';
 import Join from '../components/Join';
 import { makeStyles } from '@material-ui/core/styles'
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        flexGrow: 1,
-        
+        flexGrow: 1,  
     },
     item:{
         minWidth: 400,

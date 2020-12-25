@@ -6,20 +6,22 @@ const io = require('socket.io')(http, {
     }
 });
 
-const rooms = [{
-    id: 1,
-    player1: 'sa',
-    player2: '',
-    board: {
-        place: [
-            ['', '', ''],
-            ['', '', ''],
-            ['', '', '']
-        ],
-        next: 'x'
-    },
-    status: 'waiting'
-}];
+let rooms = [
+//     {
+//     id: 1,
+//     player1: 'sa',
+//     player2: '',
+//     board: {
+//         place: [
+//             ['', '', ''],
+//             ['', '', ''],
+//             ['', '', '']
+//         ],
+//         next: 'x'
+//     },
+//     status: 'waiting'
+// }
+];
 const createRoom = (player) => {
     console.log(player, 'player');
     const room = {
@@ -46,7 +48,7 @@ const joinRoom = (player, roomId, nextTip) => {
     if (room !== undefined) {
         room.player2 = player;
         room.status = 'ready';
-        room.next = nextTip;
+        room.board.next = nextTip;
         return room;
     }
     return null;
@@ -56,27 +58,26 @@ const joinRoom = (player, roomId, nextTip) => {
 
 io.on('connection', socket => {
     console.log('user connected', socket.id);
-    socket.on('get-rooms', () => {
+    socket.on('get-rooms', (data) => {
         // console.log('rooms')
-        socket.emit('rooms', rooms.filter(i=>i!==null));
+        // const {roomses} = data;
+        const length = rooms.filter(i=>i!==null).length;
+        if (data !== length) {
+            socket.emit('rooms', rooms.filter(i => i !== null));
+        }
+       
     })
     socket.on('create-room', (data) => {
-        console.log(data, 'data___________');
         const room = createRoom(data);
         socket.emit('created', room);
-        console.log('create', rooms);
-        socket.emit('rooms', rooms.filter(i=>i!==null));
     });
 
     socket.on('join-room', (data) => {
-        console.log(data, 'data');
-        const { player, roomId, nextTip } = data;
-        const room = joinRoom(player, roomId, nextTip);
-        console.log(room, 'roomid');
+        const { player, roomId, myTip } = data;
+        const room = joinRoom(player, roomId, myTip);
         if (room !== null) {
             io.emit('joined', room);
             io.emit('started', room);
-            console.log('joined');
         }
         else {
             socket.emit('joined', { code: 404, message: 'room not found!' });
@@ -86,9 +87,10 @@ io.on('connection', socket => {
     socket.on('move-change', (data) => {
         const { id } = data;
         rooms[id] = data;
-        // console.log(rooms[id].board.place, 'changed');
         io.emit('changed', data);
     });
-    socket.on('disconnected', () => console.log('=('));
+    socket.on('disconnected', () => {
+        rooms = [];
+    });
 });
 http.listen(1337, () => console.log('server started on PORT ' + 1337));
