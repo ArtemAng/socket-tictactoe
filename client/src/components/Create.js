@@ -1,6 +1,8 @@
 import { Button, Input, Paper } from '@material-ui/core';
-import React from 'react';
-import { makeStyles } from '@material-ui/core/styles'
+import { useContext, useState, useEffect } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import { Link } from 'react-router-dom';
+import { SocketContext } from '../App';
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -24,13 +26,47 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+
 const Create = () => {
     const classes = useStyles();
+    const [roomId, setRoomID] = useState(0);
+    const [userName, SetUserName] = useState(0);
+    const socket = useContext(SocketContext);
+
+    // useEffect(() => {
+    //     socket.
+
+    // }, [input]);
+
+    useEffect(() => {
+        console.log(socket)
+    }, [socket]);
+
     return (
         <Paper className={classes.paper}>
-           <Input className={classes.textField} placeholder="Name" color='secondary' />
-           <Input className={classes.textField} placeholder="Room" color='secondary' />
-           <Button variant='outlined' color='secondary'> create </Button>
+            <Input
+                className={classes.textField}
+                placeholder="Name"
+                color='secondary'
+                onChange={(e) => SetUserName(e.target.value)} />
+            <Input
+                className={classes.textField}
+                placeholder="Room"
+                color='secondary'
+                onChange={(e) => setRoomID(e.target.value)} />
+            <Link to={`/game?username=${userName}&id=${roomId}&type=create`}>
+                <Button
+                    variant='outlined'
+                    color='secondary'
+                    onClick={() => {
+                        socket.emit('create-room', { roomId, userName })
+                        socket.emit('get-rooms');
+
+                    }}
+                >
+                    create
+                </Button>
+            </Link>
         </Paper>
     );
 }

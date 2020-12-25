@@ -1,7 +1,7 @@
 import { Button, Input, Paper, Typography } from '@material-ui/core';
-import { useEffect, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles'
-import io from 'socket.io-client';
+import { useEffect, useState, useContext } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import { SocketContext } from '../App';
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -17,35 +17,61 @@ const useStyles = makeStyles((theme) => ({
         margin: 5
     },
 
+    indicator: {
+        width: 10,
+        height: 10
+    },
+    room: {
+        display: 'flex'
+    },
+    waiting: {
+        backgroundColor: 'green',
+        marginTop: 15,
+        borderRadius: '50%',
+        width: 10,
+        height: 10,
+    },
+    started: {
+        width: 10,
+        marginTop: 15,
+        borderRadius: '50%',
+        height: 10,
+        backgroundColor: 'red'
+    },
     submit: {
         marginTop: 5,
         height: 50
     },
 }));
-let socket = io.connect('localhost:1337');
+
 
 const Join = () => {
+    const [userName, setUserName] = useState('');
     const [rooms, setRooms] = useState([]);
+    const socket = useContext(SocketContext);
 
     useEffect(() => {
-        console.log(socket);
         // socket = ;
-        socket.emit('get-rooms');
         socket.on('rooms', (data) => {
+            console.log(data);
             setRooms(data);
-            console.log('ss1');
-        })
-
-    })
+        });
+    }, [socket, setRooms, rooms]);
     const classes = useStyles();
     return (
         <Paper className={classes.paper}>
             <Typography variant='h4' className={classes.header} color='secondary' >Join into room</Typography>
+            <Input onChange={(e) => setUserName(e.target.value)} className={classes.textField} placeholder="Name" color='secondary' />
             {
                 rooms.map((room, i) => (
-                    <div>
-                        <Button key={i} className={classes.header} variant='outlined' color='secondary'> create </Button>
-                        <span>s</span>
+                    <div className={classes.room}>
+                        <Button
+                            key={i}
+                            onClick={() => socket.emit('join-room', [userName, room.id])}
+                            className={classes.header}
+                            variant='outlined'
+                            color='secondary'> {room.id} </Button>
+                        <div className={room.status === 'waiting' ? classes.waiting : classes.started}></div>
                     </div>
                 ))
             }

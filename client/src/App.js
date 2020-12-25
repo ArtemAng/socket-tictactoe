@@ -1,21 +1,23 @@
-import './App.css';
 import io from 'socket.io-client';
-import { useEffect } from 'react'
 import { useRoutes } from './routes';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { createContext } from 'react';
+
+const socket = io.connect('localhost:1337');
+export const SocketContext = createContext({ socket })
 
 function App() {
-  useEffect(() => {
-    // io.connect('http://localhost:5000/');
-  })
+  // setSocket(socket)
   const routes = useRoutes();
   return (
-    <Router>
-      <div className="App">
-        {routes}
-      </div>
-    </Router>
+    <SocketContext.Provider value={socket}>
+      <Router>
+        <div className="App">
+          {routes}
+        </div>
+      </Router>
+    </SocketContext.Provider>
   );
 }
 
-export default App;
+export default App; 

@@ -1,16 +1,16 @@
-import React from 'react';
+import { useState, useEffect, useContext } from 'react';
 import {
     Table,
     TableBody,
     TableCell,
     TableRow,
-    Button
-} from '@material-ui/core'
-import { connect } from 'react-redux';
+    Button,
+    TableHead,
+    Typography
+} from '@material-ui/core';
+import queryString from 'querystring';
 import { makeStyles } from '@material-ui/core/styles';
-import * as actions from '../actions';
-import { bindActionCreators } from 'redux';
-import { useEffect } from 'react'
+import { SocketContext } from '../App';
 
 const useStyles = makeStyles({
     root: {
@@ -29,27 +29,141 @@ const useStyles = makeStyles({
     }
 })
 
-const PlacePage = ({ place, isWin, cellChange, switchMove, findWinner, move }) => {
+const PlacePage = () => {
     const classes = useStyles();
-    useEffect(()=>{
-        findWinner(place);
+    const [myTip, setTip] = useState('');
+    const socket = useContext(SocketContext);
+    const [userName, setName] = useState('')
+    const [room, setRoom] = useState({
+        id: 1,
+        player1: 'sa',
+        player2: '',
+        board: {
+            place: [
+                ['', '', ''],
+                ['', '', ''],
+                ['', '', '']
+            ],
+            next: 'x'
+        },
+        status: 'waiting'
+    });
 
-        if(isWin)
-            alert('win player ' + move)
-    }, [isWin, move, findWinner, place])
+    useEffect(() => {
+        const [player, roomId, type] = Object.values(queryString.parse(window.location.search));
+        setName(player);
+        if (type === 'create') {
+            socket.emit('create-room', { player, roomId })
+            setTip('x');
+        }
+        else {
+            socket.emit('join-room', { player, roomId, myTip: myTip==='x'? 'o':'x' })
+            setTip('o');
+        }
+        console.log(socket)
+    }, [socket]);
+
+    useEffect(() => {
+        socket.on('started', data => setRoom(data));
+        socket.on('joined', data => {
+            if (data.code !== 404) {
+                setRoom(data);
+            } else {
+                alert('room not found');
+                window.history.back();
+            }
+        });
+        socket.on('changed', data => setRoom(data));
+    }, [socket, setRoom]);
+
+    const cellChange = (idRow, idCol) => {
+        socket.on('changed', (data) => setRoom(data))
+        const newState = { ...room };
+        newState.board.place[idRow][idCol] = room.board.next;
+        newState.board.next = room.board.next === 'x' ? 'o' : 'x';
+        setRoom(newState);
+        socket.emit('move-change', room);
+
+    }
+
+    const findWinner = () => {
+        const { place } = room.board;
+        let move = '';
+        let isWin = false;
+        const rows = place.map(row => row.filter((item, idx, self) => self.indexOf(item) === idx || item === ''));
+        rows.map(i => {
+            if (i.length === 1) {
+                isWin = true
+                move = i[0]
+            }
+            return i;
+        });
+
+        let cols = [];
+        for (let i = 0; i < 3; i++) {
+            let res = [];
+            for (let j = 0; j < 3; j++) {
+                res.push(place[j][i]);
+            }
+            cols.push(res);
+        }
+
+        cols.map(col => col.filter((item, idx, self) => self.indexOf(item) === idx || item === '')).map(i => {
+            if (i.length === 1) {
+                isWin = true;
+                move = i[0];
+            }
+            return i;
+        });
+
+        let diaganals = [[], []];
+
+        for (let i = 0, j = 2; i < 3 && j > -1; i++, j--) {
+            diaganals[0].push(place[i][i]);
+            diaganals[1].push(place[i][j]);
+        }
+
+        diaganals.map(diaganal => (
+            diaganal.filter((item, idx, self) => self.indexOf(item) === idx || item === '')
+        )).map(i => {
+            if (i.length === 1) {
+                isWin = true;
+                move = i[0];
+            }
+            return i;
+        });
+        if (isWin) {
+            alert('win ' + move);
+        }
+        return isWin
+    }
+    useEffect(() => {
+        findWinner()
+    });
 
     return (
         <Table className={classes.root}>
+            <TableHead >
+                <TableRow>
+                    <TableCell colSpan={3}>
+                        <Typography align='center' variant='h6' color='secondary'>Hi {userName}! Your tip is: {myTip}</Typography>
+                    </TableCell>
+                </TableRow>
+            </TableHead>
             <TableBody>
-                {place.map((rows, rowId, self) => (
+                {room.board.place.map((rows, rowId, self) => (
                     <TableRow key={Date.now() * rowId}>
                         {
                             rows.map((cell, collId) => (
                                 <TableCell key={Date.now() / (collId + 1)} className={classes.cell} align='center'>
-                                    <Button className={classes.btn} onClick={() => {
-                                        cellChange({ rowId, collId, move });
-                                        switchMove();
-                                    }}>
+                                    <Button
+                                        variant='outlined'
+                                        color='secondary'
+                                        className={classes.btn} onClick={() => {
+                                            if (myTip===room.board.next) {
+                                                !findWinner() && cellChange(rowId, collId);
+                                            }
+                                        }}>
                                         {cell}
                                     </Button>
                                 </TableCell>
@@ -62,19 +176,4 @@ const PlacePage = ({ place, isWin, cellChange, switchMove, findWinner, move }) =
     );
 }
 
-const mapStateToProps = (state) => {
-    return {
-        place: state.place,
-        move: state.user.move,
-        isWin: state.user.isWin
-    }
-};
-const mapDispatchToProps = (dispatch) => {
-    const { cellChange, findWinner, switchMove } = bindActionCreators(actions, dispatch)
-    return {
-        cellChange,
-        findWinner,
-        switchMove
-    }
-};
-export default connect(mapStateToProps, mapDispatchToProps)(PlacePage);
+export default PlacePage;
