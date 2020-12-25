@@ -11,6 +11,7 @@ import {
 import queryString from 'querystring';
 import { makeStyles } from '@material-ui/core/styles';
 import { SocketContext } from '../App';
+import { Redirect } from 'react-router-dom';
 
 const useStyles = makeStyles({
     root: {
@@ -34,6 +35,7 @@ const PlacePage = () => {
     const [myTip, setTip] = useState('');
     const socket = useContext(SocketContext);
     const [userName, setName] = useState('')
+    const [win, setWin] = useState(false);
     const [room, setRoom] = useState({
         id: 1,
         player1: 'sa',
@@ -61,7 +63,7 @@ const PlacePage = () => {
             setTip('o');
         }
         console.log(socket)
-    }, [socket]);
+    }, [socket, myTip]);
 
     useEffect(() => {
         socket.on('started', data => setRoom(data));
@@ -135,9 +137,10 @@ const PlacePage = () => {
         });
         if (isWin) {
             alert('win ' + move);
+            setWin(true);
             socket.emit('disconnected');
         }
-        return isWin
+        // return isWin
     }
     useEffect(() => {
         findWinner()
@@ -163,7 +166,7 @@ const PlacePage = () => {
                                         color='secondary'
                                         className={classes.btn} onClick={() => {
                                             if (myTip===room.board.next) {
-                                                !findWinner() && cellChange(rowId, collId);
+                                                !win && cellChange(rowId, collId)
                                             }
                                         }}>
                                         {cell}
@@ -173,6 +176,9 @@ const PlacePage = () => {
                         }
                     </TableRow>
                 ))}
+                {
+                    win&& <Redirect to='/'/>
+                }
             </TableBody>
         </Table>
     );

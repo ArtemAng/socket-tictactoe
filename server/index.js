@@ -59,11 +59,11 @@ const joinRoom = (player, roomId, nextTip) => {
 io.on('connection', socket => {
     console.log('user connected', socket.id);
     socket.on('get-rooms', (data) => {
-        // console.log('rooms')
+        //  console.log('rooms')
         // const {roomses} = data;
         const length = rooms.filter(i=>i!==null).length;
         if (data !== length) {
-            socket.emit('rooms', rooms.filter(i => i !== null));
+            socket.emit('rooms', rooms.filter(i => i !== null ));
         }
        
     })

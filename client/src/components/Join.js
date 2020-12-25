@@ -43,23 +43,26 @@ const useStyles = makeStyles((theme) => ({
         marginTop: 5,
         height: 50
     },
+    textField:{
+        color: 'white'
+    }
 }));
 
 
 const Join = () => {
     const [userName, setUserName] = useState('');
     const [rooms, setRooms] = useState([]);
+    const [searchExpr, setSearch] = useState('');
     const socket = useContext(SocketContext);
 
     useEffect(() => {
-
         socket.emit('get-rooms', rooms.length);
         // socket = ;
         socket.on('rooms', (data) => {
-            console.log(data);
             setRooms(data);
         });
     }, [socket, setRooms, rooms]);
+    
     const classes = useStyles();
     return (
         <Paper className={classes.paper}>
@@ -71,12 +74,12 @@ const Join = () => {
                 Join into room
             </Typography>
             <Input onChange={(e) => setUserName(e.target.value)} className={classes.textField} placeholder="Name" color='secondary' />
+            <Input onChange={(e) => setSearch(e.target.value)} className={classes.textField} placeholder="Search" color='secondary' />
             {
-                rooms.map((room, i) => (
-                    <div className={classes.room}>
+                rooms.filter(i=>i.id.indexOf(searchExpr)!==-1).map((room, i) => (
+                    <div className={classes.room} key={i.id}>
                         <Link to={`/game?username=${userName}&id=${room.id}&type=join`}>
                             <Button
-                                key={i}
                                 className={classes.header}
                                 variant='outlined'
                                 color='secondary'> 
